@@ -8,10 +8,19 @@
 
 'use strict';
 
+var path = require('path');
+
 module.exports = function(grunt) {
 
   // Please see the Grunt documentation for more information regarding task
   // creation: http://gruntjs.com/creating-tasks
+  var baseUrl = (grunt.config.get('requirejs').compile.options.baseUrl.trim('/'));
+  var appDir = (grunt.config.get('requirejs').compile.options.appDir.trim('/'));
+
+  var srcUrl = appDir + "/" + baseUrl;
+
+  grunt.log.writeln(srcUrl);
+
 
   grunt.registerMultiTask('bust_requirejs_cache', 'Bust Require.js module file cache.', function() {
     // Merge task-specific and/or target-specific options with these defaults.
@@ -37,13 +46,25 @@ module.exports = function(grunt) {
       }).join(grunt.util.normalizelf(options.separator));
 
       // Handle options.
-      src += options.punctuation;
-	  var regex = /require\(\[((['"][\w-/]+['"],*\s*)+)\]/ig;
-	  if(/require\(\[(\'[\w-]+\',*)+\]/g.test(src)){
-		grunt.log.writeln("src match");
-	  }else{
-		grunt.log.writeln("src not match");
-	  }
+      //src += options.punctuation;
+	  var regExp = /require\(\[(([\'\"][\w-\/]+[\'\"],*\s*)+)\]/ig;
+	  var requireMatches = src.match(regExp);
+
+
+
+	  requireMatches.forEach(function(value){
+      var exp = /(?:['"])([\w-\/]+)(?:['"])/ig;
+      value.replace(exp, function($0, $1){
+        if(!/\.js$/.test($1)){
+
+
+          var filepath = path.join(srcUrl, $1) + '.js';
+          grunt.log.writeln(filepath);
+        }
+      });
+	  });
+
+	  grunt.log.writeln(requireMatches);
 
       // Write the destination file.
       grunt.file.write(f.dest, src);
