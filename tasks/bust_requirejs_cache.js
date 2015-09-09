@@ -38,6 +38,12 @@ module.exports = function(grunt) {
 
       // Handle options.
       src += options.punctuation;
+	  var regex = /require\(\[((['"][\w-/]+['"],*\s*)+)\]/ig;
+	  if(/require\(\[(\'[\w-]+\',*)+\]/g.test(src)){
+		grunt.log.writeln("src match");
+	  }else{
+		grunt.log.writeln("src not match");
+	  }
 
       // Write the destination file.
       grunt.file.write(f.dest, src);

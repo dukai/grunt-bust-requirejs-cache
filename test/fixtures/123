@@ -1,1 +1,23 @@
-1 2 3
+<!doctype html>
+<html>
+<head>
+<title>Hello world!</title>
+<link rel="stylesheet" href="../css/global.e1e5fb504a318eb0.css" type="text/css">
+<link rel="stylesheet" href="../css/index.443757ba7565ebaa.css" type="text/css">
+<head>
+<body class="bg">
+
+<div class="box green">
+<img src="../images/2.5aedbd6a3e6ca49d.jpg">
+</div>
+<script src="../js/lib/require.js" data-main="../js/rs-config"></script>
+<script>
+require(['rs-config'], function(){
+		require(['jquery', 'app/page-main'], function($){
+			console.log($('body'));
+			});
+		})
+</script>
+</body>
+</html>
+
