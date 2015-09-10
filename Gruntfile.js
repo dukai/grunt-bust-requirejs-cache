@@ -34,6 +34,14 @@ module.exports = function(grunt) {
       tests: ['tmp']
     },
 
+	copy: {
+		main: {
+		files: [
+		{expand: true, cwd: 'test', src: ['js/**', 'page/**'], dest: 'tmp/'},
+		]
+		}
+	},
+
     requirejs: {
       compile: {
         options: {
@@ -112,10 +120,11 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-nodeunit');
   grunt.loadNpmTasks('grunt-contrib-requirejs');
+  grunt.loadNpmTasks('grunt-contrib-copy');
 
   // Whenever the "test" task is run, first clean the "tmp" dir, then run this
   // plugin's task(s), then test the result.
-  grunt.registerTask('test', ['clean', 'requirejs'
+  grunt.registerTask('test', ['clean', 'copy'
 	, 'bust_requirejs_cache'
   ]);
 
