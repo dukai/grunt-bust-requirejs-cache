@@ -11,6 +11,7 @@
 var path = require('path');
 var util = require('util');
 var crypto = require('crypto');
+var fs = require('fs');
 
 var ignoreMatch = function(src, patterns) {
 	for (var i = 0, len = patterns.length; i < len; i++) {
@@ -28,9 +29,7 @@ module.exports = function(grunt) {
 	var baseUrl = (grunt.config.get('requirejs').compile.options.baseUrl.trim('/'));
 	var appDir = (grunt.config.get('requirejs').compile.options.appDir.trim('/'));
 
-	var srcUrl = appDir + "/" + baseUrl;
 
-	grunt.log.writeln("src url: " + srcUrl);
 
 	var resourceMap = {};
 
@@ -39,6 +38,10 @@ module.exports = function(grunt) {
 		//grunt.log.writeln(util.inspect(this.files));
 
 		var options = this.options();
+		var srcUrl = options.appDir + "/" + baseUrl;
+		grunt.log.writeln("src url: " + srcUrl);
+
+
 		//grunt.log.writeln(util.inspect(options));
 
 		// Iterate over all specified file groups.
@@ -73,6 +76,10 @@ module.exports = function(grunt) {
 							var shasum = crypto.createHash('md5');
 							var hash = shasum.update(grunt.file.read(filepath)).digest('hex');
 							var moduleName = resourceMap[moduleName] = moduleName + '.' + hash;
+
+							grunt.log.writeln(filepath);
+
+							fs.renameSync(filepath, filepath.replace('.js', '.' + hash + '.js'));
 							//grunt.log.writeln(hash);
 						}
 
