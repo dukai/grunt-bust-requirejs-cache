@@ -10,7 +10,7 @@
 
 module.exports = function(grunt) {
   var config = {
-    webroot: 'src',
+    webroot: 'test',
     dist: 'tmp',
     testroot: 'test',
     tstamp: '<%= grunt.template.today("ddmmyyyyhhMMss") %>'
@@ -69,12 +69,13 @@ module.exports = function(grunt) {
     bust_requirejs_cache: {
       default_options: {
         options: {
+			appDir: '<%= config.dist%>',
 			ignorePatterns: ['jquery', 'rs-config']
         },
         files: [
 			{
 				expand: true,
-				cwd: '<%= config.testroot %>',
+				cwd: '<%= config.dist %>',
 				src: 'page/**/*.html',
 				dest: '<%= config.dist%>'
 			}
@@ -110,10 +111,13 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-nodeunit');
+  grunt.loadNpmTasks('grunt-contrib-requirejs');
 
   // Whenever the "test" task is run, first clean the "tmp" dir, then run this
   // plugin's task(s), then test the result.
-  grunt.registerTask('test', ['clean', 'bust_requirejs_cache']);
+  grunt.registerTask('test', ['clean', 'requirejs'
+	, 'bust_requirejs_cache'
+  ]);
 
   // By default, lint and run all tests.
   grunt.registerTask('default', ['jshint', 'test']);
