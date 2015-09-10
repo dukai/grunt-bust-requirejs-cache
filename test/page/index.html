@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+	<head>
+		<title>Hello world!</title>
+		<link rel="stylesheet" href="../css/global.css" type="text/css">
+		<link rel="stylesheet" href="../css/index.css" type="text/css">
+	<head>
+	<body class="bg">
+
+		<div class="box green">
+			<img src="../images/2.jpg">
+		</div>
+        <script src="../js/lib/require.js" data-main="../js/rs-config"></script>
+		<script>
+			require(['rs-config'], function(){
+				require(['jquery', 'app/page-main'], function($){
+					console.log($('body'));
+				});
+			})
+		</script>
+	</body>
+</html>
