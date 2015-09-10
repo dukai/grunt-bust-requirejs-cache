@@ -11,7 +11,7 @@
 module.exports = function(grunt) {
   var config = {
     webroot: 'src',
-    dist: 'dist',
+    dist: 'tmp',
     testroot: 'test',
     tstamp: '<%= grunt.template.today("ddmmyyyyhhMMss") %>'
   };
@@ -37,7 +37,7 @@ module.exports = function(grunt) {
     requirejs: {
       compile: {
         options: {
-          appDir: '<%= config.webroot %>',
+          appDir: '<%= config.testroot %>',
           baseUrl: "js",
           dir: '<%= config.dist %>',
           mainConfigFile: '<%= config.webroot %>/js/rs-config.js',
@@ -69,20 +69,31 @@ module.exports = function(grunt) {
     bust_requirejs_cache: {
       default_options: {
         options: {
+			ignorePatterns: ['jquery', 'rs-config']
         },
-        files: {
-          'tmp/default_options': ['test/fixtures/testing', 'test/fixtures/123']
-        }
-      },
-      custom_options: {
-        options: {
-          separator: ': ',
-          punctuation: ' !!!'
-        },
-        files: {
-          'tmp/custom_options': ['test/fixtures/testing', 'test/fixtures/123']
-        }
+        files: [
+			{
+				expand: true,
+				cwd: '<%= config.testroot %>',
+				src: 'page/**/*.html',
+				dest: '<%= config.dist%>'
+			}
+		]
       }
+	  //,
+      //custom_options: {
+        //options: {
+			//ignorePatterns: ['jquery']
+        //},
+		//files: [
+			//{
+			//expand: true, 
+			//cwd: '<%= config.testroot %>',
+			//src: ['page/**/*.html'], 
+			//dest: '<%= config.dist %>'
+			//}
+		//]
+      //}
     },
 
     // Unit tests.
