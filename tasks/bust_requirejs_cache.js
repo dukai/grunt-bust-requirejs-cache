@@ -106,7 +106,7 @@ module.exports = function(grunt) {
 			grunt.log.writeln('File "' + f.dest + '" created.');
 		});
 		grunt.log.writeln(JSON.stringify(resourceMap));
-		grunt.file.write('tmp/resource-map.json', JSON.stringify(resourceMap));
+		grunt.file.write(options.appDir + '/resource-map.json', JSON.stringify(resourceMap));
 	});
 
 };
