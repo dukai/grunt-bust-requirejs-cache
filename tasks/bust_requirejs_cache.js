@@ -74,7 +74,14 @@ module.exports = function(grunt) {
 							var filepath = path.join(srcUrl, moduleName) + '.js';
 							//grunt.log.writeln(filepath);
 							var shasum = crypto.createHash('md5');
-							var hash = shasum.update(grunt.file.read(filepath)).digest('hex');
+
+							var fileContent = grunt.file.read(filepath);
+
+							var hash = shasum.update(fileContent).digest('hex');
+
+							var newFileContent = fileContent.replace(moduleName, moduleName + "." + hash);
+							grunt.file.write(filepath, newFileContent);
+
 							var moduleName = resourceMap[moduleName] = moduleName + '.' + hash;
 
 							grunt.log.writeln(filepath);
