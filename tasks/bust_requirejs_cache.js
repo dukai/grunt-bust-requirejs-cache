@@ -39,7 +39,7 @@ module.exports = function(grunt) {
 
 		var options = this.options();
 		var srcUrl = options.appDir + "/" + baseUrl;
-		grunt.log.writeln("src url: " + srcUrl);
+		grunt.log.debug("src url: " + srcUrl);
 
 
 		//grunt.log.writeln(util.inspect(options));
@@ -71,20 +71,29 @@ module.exports = function(grunt) {
 					var exp = /(['"])([\w-\/]+)(['"])/ig;
 					var result = value.replace(exp, function($0, $1, moduleName, $3) {
 						if (!/\.js$/.test(moduleName) && ! ignoreMatch(moduleName, options.ignorePatterns)) {
+							//如果已经加过指纹，直接返回
+							if(resourceMap[moduleName]){
+								return $1 + resourceMap[moduleName] + $3;
+							}
+
 							var filepath = path.join(srcUrl, moduleName) + '.js';
-							//grunt.log.writeln(filepath);
+							grunt.log.debug(filepath);
 							var shasum = crypto.createHash('md5');
 
+							if(!grunt.file.exists(filepath)){
+								grunt.log.warn('target file "' + filepath + '" not found');
+								return $1 + moduleName + $3;
+							}
 							var fileContent = grunt.file.read(filepath);
 
 							var hash = shasum.update(fileContent).digest('hex');
 
-							var newFileContent = fileContent.replace(moduleName, moduleName + "." + hash);
-							grunt.file.write(filepath, newFileContent);
+							// var newFileContent = fileContent.replace(moduleName, moduleName + "." + hash);
+							// grunt.file.write(filepath, fileContent);
 
 							var moduleName = resourceMap[moduleName] = moduleName + '.' + hash;
 
-							grunt.log.writeln(filepath);
+							grunt.log.debug(filepath);
 
 							fs.renameSync(filepath, filepath.replace('.js', '.' + hash + '.js'));
 							//grunt.log.writeln(hash);
@@ -96,23 +105,23 @@ module.exports = function(grunt) {
 					return result;
 				});
 
-				grunt.log.writeln(hashedMatches);
-				requireMatches.forEach(function(value, index){
-					if(value != hashedMatches[index]){
-						src = src.replace(value, hashedMatches[index]);
-					}
-				});
+				grunt.log.debug(hashedMatches);
+				// requireMatches.forEach(function(value, index){
+				// 	if(value != hashedMatches[index]){
+				// 		src = src.replace(value, hashedMatches[index]);
+				// 	}
+				// });
 
 			}
 
 
 			// Write the destination file.
-			grunt.file.write(f.dest, src);
+			// grunt.file.write(f.dest, src);
 
 			// Print a success message.
 			grunt.log.writeln('File "' + f.dest + '" created.');
 		});
-		grunt.log.writeln(JSON.stringify(resourceMap));
+		grunt.log.debug(JSON.stringify(resourceMap));
 		grunt.file.write(options.appDir + '/resource-map.json', JSON.stringify(resourceMap));
 	});
 
