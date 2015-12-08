@@ -22,6 +22,12 @@ var ignoreMatch = function(src, patterns) {
 	return false;
 }
 
+var getHash = function(fileContent){
+	var shasum = crypto.createHash('md5');
+	var hash = shasum.update(fileContent).digest('hex');
+	return hash;
+}
+
 module.exports = function(grunt) {
 
 	// Please see the Grunt documentation for more information regarding task
@@ -78,7 +84,7 @@ module.exports = function(grunt) {
 
 							var filepath = path.join(srcUrl, moduleName) + '.js';
 							grunt.log.debug(filepath);
-							var shasum = crypto.createHash('md5');
+							
 
 							if(!grunt.file.exists(filepath)){
 								grunt.log.warn('target file "' + filepath + '" not found');
@@ -86,7 +92,7 @@ module.exports = function(grunt) {
 							}
 							var fileContent = grunt.file.read(filepath);
 
-							var hash = shasum.update(fileContent).digest('hex');
+							var hash = getHash(fileContent);
 
 							// var newFileContent = fileContent.replace(moduleName, moduleName + "." + hash);
 							// grunt.file.write(filepath, fileContent);
@@ -121,8 +127,38 @@ module.exports = function(grunt) {
 			// Print a success message.
 			grunt.log.writeln('File "' + f.dest + '" created.');
 		});
-		grunt.log.debug(JSON.stringify(resourceMap));
+
+		var resourceMapFileContent = JSON.stringify(resourceMap);
+		grunt.log.debug(resourceMapFileContent);
+
+		//获取requirejs cache bust生成的js模块的source map
+		var rsconfigPath = this.options().dist + '/js/rs-config.js';
+        // var resourceMap = grunt.file.read(this.options().dist + '/resource-map.json');
+        var modulePath = 'requirejs.config({"paths": ' + resourceMapFileContent + "});";
+        var rsConfig = grunt.file.read(rsconfigPath);
+
+        grunt.file.write(rsconfigPath, rsConfig + modulePath);
+        grunt.log.writeln("update rs-config.js");
+        var rsconfigHash = getHash(rsConfig + modulePath);
+        fs.renameSync(rsconfigPath, rsconfigPath.replace('.js', '.' + rsconfigHash + '.js'));
+
+        resourceMap['rs-config'] = 'rs-config.' + rsconfigHash;
 		grunt.file.write(options.appDir + '/resource-map.json', JSON.stringify(resourceMap));
+
+        this.files.forEach(function(f){
+        	var src = '';
+
+			if (!grunt.file.exists(f.src[0])) {
+				grunt.log.warn('Source file "' + f.src[0] + '" not found.');
+			} else {
+				src = grunt.file.read(f.src[0]);
+			}
+
+			var src = src.replace(/rs-config/ig, 'rs-config.' + rsconfigHash);
+
+			grunt.file.write(f.dest, src);
+
+        });
 	});
 
 };
