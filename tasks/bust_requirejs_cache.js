@@ -71,7 +71,6 @@ module.exports = function(grunt) {
 
 			var hashedMatches = [];
 
-
 			if (requireMatches) {
 				hashedMatches = requireMatches.map(function(value) {
 					var exp = /(['"])([\w-\/]+)(['"])/ig;
@@ -117,7 +116,41 @@ module.exports = function(grunt) {
 				// 		src = src.replace(value, hashedMatches[index]);
 				// 	}
 				// });
+			}
 
+			var dataRegExp = /data-widget="(.+?)"/ig;
+			var result;
+
+			while((result = dataRegExp.exec(src)) != null){
+				var moduleName = result[1];
+				if (!/\.js$/.test(moduleName) && ! ignoreMatch(moduleName, options.ignorePatterns)) {
+					//如果已经加过指纹，直接返回
+					if(resourceMap[moduleName]){
+						continue;
+					}
+
+					var filepath = path.join(srcUrl, moduleName) + '.js';
+					grunt.log.debug(filepath);
+					
+
+					if(!grunt.file.exists(filepath)){
+						grunt.log.warn('target file "' + filepath + '" not found');
+						return $1 + moduleName + $3;
+					}
+					var fileContent = grunt.file.read(filepath);
+
+					var hash = getHash(fileContent);
+
+					// var newFileContent = fileContent.replace(moduleName, moduleName + "." + hash);
+					// grunt.file.write(filepath, fileContent);
+
+					var moduleName = resourceMap[moduleName] = moduleName + '.' + hash;
+
+					grunt.log.debug(filepath);
+
+					fs.renameSync(filepath, filepath.replace('.js', '.' + hash + '.js'));
+					//grunt.log.writeln(hash);
+				}	
 			}
 
 
