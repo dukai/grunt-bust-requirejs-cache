@@ -73,29 +73,16 @@ module.exports = function(grunt) {
 			default_options: {
 				options: {
 					appDir: '<%= config.dist%>',
+					dist: '<%= config.dist%>',
 					ignorePatterns: ['jquery', 'rs-config']
 				},
 				files: [{
 					expand: true,
 					cwd: '<%= config.dist %>',
-					src: 'page/**/*.html',
+					src: ['page/**/*.html', 'js/app/**/*.js'],
 					dest: '<%= config.dist%>'
 				}]
 			}
-			//,
-			//custom_options: {
-			//options: {
-			//ignorePatterns: ['jquery']
-			//},
-			//files: [
-			//{
-			//expand: true, 
-			//cwd: '<%= config.testroot %>',
-			//src: ['page/**/*.html'], 
-			//dest: '<%= config.dist %>'
-			//}
-			//]
-			//}
 		},
 
 		// Unit tests.

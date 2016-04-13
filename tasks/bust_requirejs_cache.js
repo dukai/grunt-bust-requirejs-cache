@@ -14,158 +14,168 @@ var crypto = require('crypto');
 var fs = require('fs');
 
 var ignoreMatch = function(src, patterns) {
-	for (var i = 0, len = patterns.length; i < len; i++) {
-		if (src.search(patterns[i]) != - 1) {
-			return true;
-		}
-	}
-	return false;
+    for (var i = 0, len = patterns.length; i < len; i++) {
+        if (src.search(patterns[i]) != - 1) {
+            return true;
+        }
+    }
+    return false;
 }
 
 var getHash = function(fileContent){
-	var shasum = crypto.createHash('md5');
-	var hash = shasum.update(fileContent).digest('hex');
-	return hash;
+    var shasum = crypto.createHash('md5');
+    var hash = shasum.update(fileContent).digest('hex');
+    return hash;
 }
 
 module.exports = function(grunt) {
 
-	// Please see the Grunt documentation for more information regarding task
-	// creation: http://gruntjs.com/creating-tasks
-	var baseUrl = (grunt.config.get('requirejs').compile.options.baseUrl.trim('/'));
-	var appDir = (grunt.config.get('requirejs').compile.options.appDir.trim('/'));
+    var baseUrl = (grunt.config.get('requirejs').compile.options.baseUrl.trim('/'));
+    var appDir = (grunt.config.get('requirejs').compile.options.appDir.trim('/'));
+
+    var resourceMap = {};
+
+    grunt.registerMultiTask('bust_requirejs_cache', 'Bust Require.js module file cache.', function() {
+        //grunt.log.writeln(util.inspect(this.files));
+
+        var options = this.options({baseUrl: 'js'});
+        var srcUrl = options.appDir + "/" + baseUrl;
+        grunt.log.debug("src url: " + srcUrl);
+
+
+        //grunt.log.writeln(util.inspect(options));
+
+        // Iterate over all specified file groups.
+        this.files.forEach(function(f) {
+            var src = '';
+
+            if (!grunt.file.exists(f.src[0])) {
+                //grunt.log.warn('Source file "' + f.src[0] + '" not found.');
+                return;
+            } else {
+                src = grunt.file.read(f.src[0]);
+            }
+
+            var filepath = f.src[0];
+
+            var ext = path.extname(filepath);
+
+            if(ext == '.js'){
+                var modulename = filepath.replace(options.appDir + path.sep + options.baseUrl + path.sep, '').replace('.js', '');
+                grunt.log.debug(modulename);
+                if(resourceMap[moduleName]){
+                    return;
+                }
+
+                var fileContent = grunt.file.read(filepath);
+
+                var hash = getHash(fileContent);
+
+                var moduleName = resourceMap[moduleName] = moduleName + '.' + hash;
+
+                grunt.log.debug(filepath);
+
+                fs.renameSync(filepath, filepath.replace('.js', '.' + hash + '.js'));
+
+            }else{
+            
+                var regExp = /require\(\[(([\'\"][\w-\/]+[\'\"],*\s*)+)\]/ig;
+                var requireMatches = src.match(regExp);
+
+                var hashedMatches = [];
+
+                if (requireMatches) {
+                    hashedMatches = requireMatches.map(function(value) {
+                        var exp = /(['"])([\w-\/]+)(['"])/ig;
+                        var result = value.replace(exp, function($0, $1, moduleName, $3) {
+                            if (!/\.js$/.test(moduleName) && ! ignoreMatch(moduleName, options.ignorePatterns)) {
+                                //如果已经加过指纹，直接返回
+                                if(resourceMap[moduleName]){
+                                    return $1 + resourceMap[moduleName] + $3;
+                                }
+
+                                var filepath = path.join(srcUrl, moduleName) + '.js';
+                                grunt.log.debug(filepath);
+
+
+                                if(!grunt.file.exists(filepath)){
+                                    grunt.log.warn('target file "' + filepath + '" not found');
+                                    return $1 + moduleName + $3;
+                                }
+                                var fileContent = grunt.file.read(filepath);
+
+                                var hash = getHash(fileContent);
+
+                                // var newFileContent = fileContent.replace(moduleName, moduleName + "." + hash);
+                                // grunt.file.write(filepath, fileContent);
+
+                                var moduleName = resourceMap[moduleName] = moduleName + '.' + hash;
+
+                                grunt.log.debug(filepath);
+
+                                fs.renameSync(filepath, filepath.replace('.js', '.' + hash + '.js'));
+                                //grunt.log.writeln(hash);
+                            }
+
+                            return $1 + moduleName + $3;
+                        });
+                        //grunt.log.writeln(result);
+                        return result;
+                    });
+
+                    grunt.log.debug(hashedMatches);
+                }
+
+                var dataRegExp = /data-widget="(.+?)"/ig;
+                var result;
+
+                while((result = dataRegExp.exec(src)) != null){
+                    var moduleName = result[1];
+                    if (!/\.js$/.test(moduleName) && ! ignoreMatch(moduleName, options.ignorePatterns)) {
+                        //如果已经加过指纹，直接返回
+                        if(resourceMap[moduleName]){
+                            continue;
+                        }
+
+                        var filepath = path.join(srcUrl, moduleName) + '.js';
+                        grunt.log.debug(filepath);
+
+
+                        if(!grunt.file.exists(filepath)){
+                            grunt.log.warn('target file "' + filepath + '" not found');
+                            return $1 + moduleName + $3;
+                        }
+                        var fileContent = grunt.file.read(filepath);
+
+                        var hash = getHash(fileContent);
+
+                        // var newFileContent = fileContent.replace(moduleName, moduleName + "." + hash);
+                        // grunt.file.write(filepath, fileContent);
+
+                        var moduleName = resourceMap[moduleName] = moduleName + '.' + hash;
+
+                        grunt.log.debug(filepath);
+
+                        fs.renameSync(filepath, filepath.replace('.js', '.' + hash + '.js'));
+                        //grunt.log.writeln(hash);
+                    }   
+                }
+            }
 
 
 
-	var resourceMap = {};
+            // Write the destination file.
+            // grunt.file.write(f.dest, src);
 
-	grunt.registerMultiTask('bust_requirejs_cache', 'Bust Require.js module file cache.', function() {
-		// Merge task-specific and/or target-specific options with these defaults.
-		//grunt.log.writeln(util.inspect(this.files));
+            // Print a success message.
+            grunt.log.writeln('File "' + f.dest + '" bust.');
+        });
 
-		var options = this.options();
-		var srcUrl = options.appDir + "/" + baseUrl;
-		grunt.log.debug("src url: " + srcUrl);
+        var resourceMapFileContent = JSON.stringify(resourceMap);
+        grunt.log.debug(resourceMapFileContent);
 
-
-		//grunt.log.writeln(util.inspect(options));
-
-		// Iterate over all specified file groups.
-		this.files.forEach(function(f) {
-			// Concat specified files.
-			var src = '';
-
-			if (!grunt.file.exists(f.src[0])) {
-				grunt.log.warn('Source file "' + f.src[0] + '" not found.');
-			} else {
-				src = grunt.file.read(f.src[0]);
-			}
-
-			//grunt.log.writeln(src);
-
-			// Handle options.
-			//src += options.punctuation;
-			var regExp = /require\(\[(([\'\"][\w-\/]+[\'\"],*\s*)+)\]/ig;
-			var requireMatches = src.match(regExp);
-			//grunt.log.writeln(requireMatches);
-
-			var hashedMatches = [];
-
-			if (requireMatches) {
-				hashedMatches = requireMatches.map(function(value) {
-					var exp = /(['"])([\w-\/]+)(['"])/ig;
-					var result = value.replace(exp, function($0, $1, moduleName, $3) {
-						if (!/\.js$/.test(moduleName) && ! ignoreMatch(moduleName, options.ignorePatterns)) {
-							//如果已经加过指纹，直接返回
-							if(resourceMap[moduleName]){
-								return $1 + resourceMap[moduleName] + $3;
-							}
-
-							var filepath = path.join(srcUrl, moduleName) + '.js';
-							grunt.log.debug(filepath);
-							
-
-							if(!grunt.file.exists(filepath)){
-								grunt.log.warn('target file "' + filepath + '" not found');
-								return $1 + moduleName + $3;
-							}
-							var fileContent = grunt.file.read(filepath);
-
-							var hash = getHash(fileContent);
-
-							// var newFileContent = fileContent.replace(moduleName, moduleName + "." + hash);
-							// grunt.file.write(filepath, fileContent);
-
-							var moduleName = resourceMap[moduleName] = moduleName + '.' + hash;
-
-							grunt.log.debug(filepath);
-
-							fs.renameSync(filepath, filepath.replace('.js', '.' + hash + '.js'));
-							//grunt.log.writeln(hash);
-						}
-
-						return $1 + moduleName + $3;
-					});
-					//grunt.log.writeln(result);
-					return result;
-				});
-
-				grunt.log.debug(hashedMatches);
-				// requireMatches.forEach(function(value, index){
-				// 	if(value != hashedMatches[index]){
-				// 		src = src.replace(value, hashedMatches[index]);
-				// 	}
-				// });
-			}
-
-			var dataRegExp = /data-widget="(.+?)"/ig;
-			var result;
-
-			while((result = dataRegExp.exec(src)) != null){
-				var moduleName = result[1];
-				if (!/\.js$/.test(moduleName) && ! ignoreMatch(moduleName, options.ignorePatterns)) {
-					//如果已经加过指纹，直接返回
-					if(resourceMap[moduleName]){
-						continue;
-					}
-
-					var filepath = path.join(srcUrl, moduleName) + '.js';
-					grunt.log.debug(filepath);
-					
-
-					if(!grunt.file.exists(filepath)){
-						grunt.log.warn('target file "' + filepath + '" not found');
-						return $1 + moduleName + $3;
-					}
-					var fileContent = grunt.file.read(filepath);
-
-					var hash = getHash(fileContent);
-
-					// var newFileContent = fileContent.replace(moduleName, moduleName + "." + hash);
-					// grunt.file.write(filepath, fileContent);
-
-					var moduleName = resourceMap[moduleName] = moduleName + '.' + hash;
-
-					grunt.log.debug(filepath);
-
-					fs.renameSync(filepath, filepath.replace('.js', '.' + hash + '.js'));
-					//grunt.log.writeln(hash);
-				}	
-			}
-
-
-			// Write the destination file.
-			// grunt.file.write(f.dest, src);
-
-			// Print a success message.
-			grunt.log.writeln('File "' + f.dest + '" created.');
-		});
-
-		var resourceMapFileContent = JSON.stringify(resourceMap);
-		grunt.log.debug(resourceMapFileContent);
-
-		//获取requirejs cache bust生成的js模块的source map
-		var rsconfigPath = this.options().dist + '/js/rs-config.js';
+        //获取requirejs cache bust生成的js模块的source map
+        var rsconfigPath = this.options().dist + '/js/rs-config.js';
         // var resourceMap = grunt.file.read(this.options().dist + '/resource-map.json');
         var modulePath = 'requirejs.config({"paths": ' + resourceMapFileContent + "});";
         var rsConfig = grunt.file.read(rsconfigPath);
@@ -176,23 +186,28 @@ module.exports = function(grunt) {
         fs.renameSync(rsconfigPath, rsconfigPath.replace('.js', '.' + rsconfigHash + '.js'));
 
         resourceMap['rs-config'] = 'rs-config.' + rsconfigHash;
-		grunt.file.write(options.appDir + '/resource-map.json', JSON.stringify(resourceMap));
+        grunt.file.write(options.appDir + '/resource-map.json', JSON.stringify(resourceMap));
 
         this.files.forEach(function(f){
-        	var src = '';
+            
+            var filename = f.src[0];
 
-			if (!grunt.file.exists(f.src[0])) {
-				grunt.log.warn('Source file "' + f.src[0] + '" not found.');
-			} else {
-				src = grunt.file.read(f.src[0]);
-			}
+            if(path.extname(filename) == '.html'){
+                var src = '';
 
-			var src = src.replace(/rs-config/ig, 'rs-config.' + rsconfigHash);
+                if (!grunt.file.exists(f.src[0])) {
+                    grunt.log.warn('Source file "' + f.src[0] + '" not found.');
+                } else {
+                    src = grunt.file.read(f.src[0]);
+                }
 
-			grunt.file.write(f.dest, src);
+                var src = src.replace(/rs-config/ig, 'rs-config.' + rsconfigHash);
+
+                grunt.file.write(f.dest, src);
+            }
 
         });
-	});
+    });
 
 };
 
