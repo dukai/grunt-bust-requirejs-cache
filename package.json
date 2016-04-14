@@ -1,7 +1,7 @@
 {
   "name": "grunt-bust-requirejs-cache",
   "description": "Bust Require.js module file cache.",
-  "version": "0.2.3",
+  "version": "0.3.1",
   "homepage": "https://github.com/dukai/grunt-bust-requirejs-cache",
   "author": {
     "name": "DK",
