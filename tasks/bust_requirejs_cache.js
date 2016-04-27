@@ -61,19 +61,18 @@ module.exports = function(grunt) {
             var ext = path.extname(filepath);
 
             if(ext == '.js'){
-                var modulename = filepath.replace(options.appDir + path.sep + options.baseUrl + path.sep, '').replace('.js', '');
-                grunt.log.debug(modulename);
+                var moduleName = filepath.replace(options.appDir + path.sep + options.baseUrl + path.sep, '').replace('.js', '');
                 if(resourceMap[moduleName]){
                     return;
                 }
+
+                moduleName = moduleName.replace(srcUrl + '/', '');
 
                 var fileContent = grunt.file.read(filepath);
 
                 var hash = getHash(fileContent);
 
                 var moduleName = resourceMap[moduleName] = moduleName + '.' + hash;
-
-                grunt.log.debug(filepath);
 
                 fs.renameSync(filepath, filepath.replace('.js', '.' + hash + '.js'));
 
@@ -95,7 +94,7 @@ module.exports = function(grunt) {
                                 }
 
                                 var filepath = path.join(srcUrl, moduleName) + '.js';
-                                grunt.log.debug(filepath);
+                                // grunt.log.debug(filepath);
 
 
                                 if(!grunt.file.exists(filepath)){
@@ -111,7 +110,7 @@ module.exports = function(grunt) {
 
                                 var moduleName = resourceMap[moduleName] = moduleName + '.' + hash;
 
-                                grunt.log.debug(filepath);
+                                // grunt.log.debug(filepath);
 
                                 fs.renameSync(filepath, filepath.replace('.js', '.' + hash + '.js'));
                                 //grunt.log.writeln(hash);
@@ -123,7 +122,7 @@ module.exports = function(grunt) {
                         return result;
                     });
 
-                    grunt.log.debug(hashedMatches);
+                    // grunt.log.debug(hashedMatches);
                 }
 
                 var dataRegExp = /data-widget="(.+?)"/ig;
@@ -138,7 +137,7 @@ module.exports = function(grunt) {
                         }
 
                         var filepath = path.join(srcUrl, moduleName) + '.js';
-                        grunt.log.debug(filepath);
+                        // grunt.log.debug(filepath);
 
 
                         if(!grunt.file.exists(filepath)){
@@ -154,7 +153,7 @@ module.exports = function(grunt) {
 
                         var moduleName = resourceMap[moduleName] = moduleName + '.' + hash;
 
-                        grunt.log.debug(filepath);
+                        // grunt.log.debug(filepath);
 
                         fs.renameSync(filepath, filepath.replace('.js', '.' + hash + '.js'));
                         //grunt.log.writeln(hash);
@@ -172,7 +171,7 @@ module.exports = function(grunt) {
         });
 
         var resourceMapFileContent = JSON.stringify(resourceMap);
-        grunt.log.debug(resourceMapFileContent);
+        // grunt.log.debug(resourceMapFileContent);
 
         //获取requirejs cache bust生成的js模块的source map
         var rsconfigPath = this.options().dist + '/js/rs-config.js';
