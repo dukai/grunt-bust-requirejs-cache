@@ -22,9 +22,12 @@ var ignoreMatch = function(src, patterns) {
     return false;
 }
 
-var getHash = function(fileContent){
+var getHash = function(fileContent, isShort){
     var shasum = crypto.createHash('md5');
     var hash = shasum.update(fileContent).digest('hex');
+    if(isShort){
+        return hash.substr(8, 16);
+    }
     return hash;
 }
 
@@ -38,7 +41,7 @@ module.exports = function(grunt) {
     grunt.registerMultiTask('bust_requirejs_cache', 'Bust Require.js module file cache.', function() {
         //grunt.log.writeln(util.inspect(this.files));
 
-        var options = this.options({baseUrl: 'js'});
+        var options = this.options({baseUrl: 'js', shortHash: false});
         var srcUrl = options.appDir + "/" + baseUrl;
         grunt.log.debug("src url: " + srcUrl);
 
@@ -70,7 +73,7 @@ module.exports = function(grunt) {
 
                 var fileContent = grunt.file.read(filepath);
 
-                var hash = getHash(fileContent);
+                var hash = getHash(fileContent, options.shortHash);
 
                 var moduleName = resourceMap[moduleName] = moduleName + '.' + hash;
 
@@ -103,7 +106,7 @@ module.exports = function(grunt) {
                                 }
                                 var fileContent = grunt.file.read(filepath);
 
-                                var hash = getHash(fileContent);
+                                var hash = getHash(fileContent, options.shortHash);
 
                                 // var newFileContent = fileContent.replace(moduleName, moduleName + "." + hash);
                                 // grunt.file.write(filepath, fileContent);
@@ -146,7 +149,7 @@ module.exports = function(grunt) {
                         }
                         var fileContent = grunt.file.read(filepath);
 
-                        var hash = getHash(fileContent);
+                        var hash = getHash(fileContent, options.shortHash);
 
                         // var newFileContent = fileContent.replace(moduleName, moduleName + "." + hash);
                         // grunt.file.write(filepath, fileContent);
@@ -181,7 +184,7 @@ module.exports = function(grunt) {
 
         grunt.file.write(rsconfigPath, rsConfig + modulePath);
         grunt.log.writeln("update rs-config.js");
-        var rsconfigHash = getHash(rsConfig + modulePath);
+        var rsconfigHash = getHash(rsConfig + modulePath, options.shortHash);
         fs.renameSync(rsconfigPath, rsconfigPath.replace('.js', '.' + rsconfigHash + '.js'));
 
         resourceMap['rs-config'] = 'rs-config.' + rsconfigHash;
